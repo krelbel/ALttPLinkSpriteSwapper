@@ -4,7 +4,8 @@ import os
 
 __version__ = '0.1-dev'
 
-#Usage: python Main.py --sprite zelda.spr --rom lttpromtobepatched.sfc #generates zelda.spr_lttpromtobepatched.sfc
+#Usage: python Main.py --write --sprite zelda.spr --rom lttpromtobepatched.sfc #generates zelda.spr_lttpromtobepatched.sfc
+#       python Main.py --read --sprite zelda.spr --rom lttpromtobescanned.sfc #generates zelda.spr
 #General rom patching logic copied from https://github.com/LLCoolDave/ALttPEntranceRandomizer
 
 def write_byte(rom, address, value):
@@ -19,7 +20,37 @@ def patch_rom(rom, sprite, palette):
     write_bytes(rom, 0xdd308, palette)
     return rom
 
-def main(args):
+def create_sprite(args):
+    logger = logging.getLogger('')
+
+    logger.info('Creating sprite file.')
+
+    rom = bytearray(open(args.rom, 'rb').read())
+
+    sprite = bytearray(28672+90+6)
+
+    #copy spritesheet
+    for i in range(28672):
+        sprite[i] = rom[0x80000+i]
+
+    #copy palette
+    for i in range(90):
+        sprite[28672+i] = rom[0xdd308+i]
+
+    #add padding
+    for i in range(6):
+        sprite[28672+90+i] = 0
+
+    outfilename = '%s' % (args.sprite)
+
+    with open('%s' % outfilename, 'wb') as outfile:
+        outfile.write(sprite)
+
+    logger.info('Done.')
+
+    return sprite
+
+def create_patched_rom(args):
     logger = logging.getLogger('')
 
     logger.info('Patching ROM.')
@@ -49,13 +80,27 @@ def main(args):
 
     return patched_rom
 
+def main(args):
+    if args.write:
+        create_patched_rom(args)
+        return
+
+    if args.read:
+        create_sprite(args)
+        return
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--loglevel', default='info', const='info', nargs='?', choices=['error', 'info', 'warning', 'debug'], help='Select level of logging for output.')
     parser.add_argument('--sprite', help='Path to a sprite sheet to use for Link. Needs to be in binary format and have a length of 0x7000 (28672) (sprite) followed by 0x5a (90) (palette) bytes.')
     parser.add_argument('--rom', help='Path to a lttp rom to be patched.')
+    parser.add_argument('--write', help='Patches rom with provided sprite file', action='store_true')
+    parser.add_argument('--read', help='Creates sprite file from provided rom', action='store_true')
     args = parser.parse_args()
 
+    if (args.read and args.write) or ((args.read != True) and (args.write != True)):
+        input('Need to specify whether to read or write sprite. Please run with -h to see help for further information. \nPress Enter to exit.')
+        exit(1)
     if args.rom is None:
         input('No rom specified. Please run with -h to see help for further information. \nPress Enter to exit.')
         exit(1)
