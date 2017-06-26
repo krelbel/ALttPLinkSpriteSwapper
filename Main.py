@@ -71,7 +71,7 @@ def create_patched_rom(args):
 
     patched_rom = patch_rom(rom, sprite, palette)
 
-    outfilename = '%s_%s' % (os.path.basename(args.sprite), os.path.basename(args.rom))
+    outfilename = '%s_%s' % (os.path.basename(args.sprite).replace(".spr",""), os.path.basename(args.rom))
 
     with open('%s' % outfilename, 'wb') as outfile:
         outfile.write(patched_rom)
