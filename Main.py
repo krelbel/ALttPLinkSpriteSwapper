@@ -33,19 +33,15 @@ def create_sprite(args):
 
     rom = bytearray(open(args.rom, 'rb').read())
 
-    sprite = bytearray(28672+90+6)
+    sprite = bytearray(28672+120)
 
     #copy spritesheet
     for i in range(28672):
         sprite[i] = rom[0x80000+i]
 
     #copy palette
-    for i in range(90):
+    for i in range(120):
         sprite[28672+i] = rom[0xdd308+i]
-
-    #add padding
-    for i in range(6):
-        sprite[28672+90+i] = 0
 
     outfilename = '%s' % (args.sprite)
 
@@ -67,12 +63,12 @@ def create_patched_rom(args):
 
     sprite = bytearray(28672)
 
-    palette = bytearray(90)
+    palette = bytearray(120)
 
     for i in range(28672):
         sprite[i] = spritesheet[i]
 
-    for i in range(90):
+    for i in range(120):
         palette[i] = spritesheet[28672+i]
 
     patched_rom = patch_rom(args, rom, sprite, palette)
@@ -98,7 +94,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--loglevel', default='info', const='info', nargs='?', choices=['error', 'info', 'warning', 'debug'], help='Select level of logging for output.')
-    parser.add_argument('--sprite', help='Path to a sprite sheet to use for Link. Needs to be in binary format and have a length of 0x7000 (28672) (sprite) followed by 0x5a (90) (palette) bytes.')
+    parser.add_argument('--sprite', help='Path to a sprite sheet to use for Link. Needs to be in binary format and have a length of 0x7000 (28672) (sprite) followed by 0x78 (120) (palette) bytes.')
     parser.add_argument('--rom', help='Path to a lttp rom to be patched.')
     parser.add_argument('--write', help='Patches rom with provided sprite file', action='store_true')
     parser.add_argument('--read', help='Creates sprite file from provided rom', action='store_true')
