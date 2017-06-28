@@ -15,9 +15,15 @@ def write_bytes(rom, startaddress, values):
     for i, value in enumerate(values):
         write_byte(rom, startaddress + i, value)
 
-def patch_rom(rom, sprite, palette):
+def patch_rom(args, rom, sprite, palette):
     write_bytes(rom, 0x80000, sprite)
     write_bytes(rom, 0xdd308, palette)
+
+    # Frame advance logic copied from https://www.zeldix.net/t242-dummied-out-frame-control-in-zelda-lttp
+    if args.frameadvance:
+        rom[0x39] = 0xEA
+        rom[0x3A] = 0xEA
+
     return rom
 
 def create_sprite(args):
@@ -69,7 +75,7 @@ def create_patched_rom(args):
     for i in range(90):
         palette[i] = spritesheet[28672+i]
 
-    patched_rom = patch_rom(rom, sprite, palette)
+    patched_rom = patch_rom(args, rom, sprite, palette)
 
     outfilename = '%s_%s' % (os.path.basename(args.sprite).replace(".spr",""), os.path.basename(args.rom))
 
@@ -96,6 +102,7 @@ if __name__ == '__main__':
     parser.add_argument('--rom', help='Path to a lttp rom to be patched.')
     parser.add_argument('--write', help='Patches rom with provided sprite file', action='store_true')
     parser.add_argument('--read', help='Creates sprite file from provided rom', action='store_true')
+    parser.add_argument('--frameadvance', help='Patches rom with the frame advance feature for sprite work (press L to freeze, R to advance a single frame, L to resume) (default: off)', action='store_true')
     args = parser.parse_args()
 
     if (args.read and args.write) or ((args.read != True) and (args.write != True)):
